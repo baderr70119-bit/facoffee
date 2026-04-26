@@ -1,9 +1,0 @@
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body,#root{height:100%;width:100%;overflow:hidden}
-body{font-family:'Tajawal',Arial,sans-serif;direction:rtl;background:#F5F3FF;font-size:14px}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:#C4B5FD;border-radius:2px}
-@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-@keyframes cartSlide{from{transform:translateY(100%)}to{transform:translateY(0)}}
-button{font-family:'Tajawal',Arial,sans-serif}
-input,textarea{font-family:'Tajawal',Arial,sans-serif}
