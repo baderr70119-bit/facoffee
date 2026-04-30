@@ -222,6 +222,10 @@ export default function POS({ session }) {
   const [customer,  setCustomer]  = useState(null)
   const [payMethod, setPayMethod] = useState(null)
   const [cashPaid,  setCashPaid]  = useState(null)
+  // Split payment: [{method, amount}]
+  const [splitPayments, setSplitPayments] = useState([])
+  const [splitMethod,   setSplitMethod]   = useState(null)
+  const [splitInput,    setSplitInput]    = useState("")
   const [notes,     setNotes]     = useState("")
   const [notesInput,setNotesInput]= useState("")
   const [orderType, setOrderType] = useState("محلي")
@@ -295,6 +299,9 @@ export default function POS({ session }) {
   const taxExtract = afterDisc*TAX_F
   const grandTotal = afterDisc
   const change     = cashPaid!==null?Math.max(0,cashPaid-grandTotal):0
+  const splitPaid      = splitPayments.reduce((s,p)=>s+p.amount,0)
+  const splitRemaining = Math.max(0, grandTotal - splitPaid)
+  const splitComplete  = splitPaid >= grandTotal && splitPayments.length > 0
   const activeCount= orders.filter(o=>o.status==="نشط").length
   const selOrder   = orders.find(o=>o.id===selOrderId)
   const filtOrders = orders.filter(o=>ordTab==="الكل"||o.status===ordTab).filter(o=>!ordSearch||String(o.id).includes(ordSearch)||String(o.num).includes(ordSearch))
@@ -314,21 +321,27 @@ export default function POS({ session }) {
 
   // ── Finish payment ────────────────────────────────────────────────────────
   const finishPayment = async () => {
-    const wasCash   = payMethod==="Cash"
-    const changeAmt = wasCash&&cashPaid!==null?Math.max(0,cashPaid-grandTotal):0
+    if(!splitComplete) return
+    const methodLabel = splitPayments.length===1
+      ? splitPayments[0].method
+      : splitPayments.map(p=>`${p.method} ${fmt(p.amount)}`).join(' + ')
+    const cashEntry   = splitPayments.find(p=>p.method==="كاش")
+    const changeAmt   = cashEntry ? Math.max(0, splitPaid - grandTotal) : 0
     const newOrder  = {
       id:counter+100000, num:counter, status:"تم", amount:grandTotal,
       time:nowStr(), type:orderType,
       items:cart.map(i=>({name:i.name,qty:i.qty,price:i.price})),
       discount:discAmt, tax:taxExtract,
-      payMethod:wasCash?"كاش":payMethod==="بطاقة"?"بطاقة":"تحويل",
+      payMethod: methodLabel,
       customer:customer?.name||null, notes
     }
     setOrders(prev=>[newOrder,...prev])
     setCounter(n=>n+1)
-    setCart([]);setDiscount(null);setCustomer(null);setPayMethod(null);setCashPaid(null);setNotes("");setOrderType("محلي");setScreen("main")
+    setCart([]);setDiscount(null);setCustomer(null);setPayMethod(null);setCashPaid(null);
+    setSplitPayments([]);setSplitMethod(null);setSplitInput("");
+    setNotes("");setOrderType("محلي");setScreen("main")
     await dbSaveOrder(newOrder, userId)
-    if(wasCash&&changeAmt>0) setChangeDialog({amount:changeAmt})
+    if(changeAmt>0) setChangeDialog({amount:changeAmt})
     else pop("✅ تم إتمام الطلب بنجاح")
   }
 
@@ -352,7 +365,7 @@ export default function POS({ session }) {
       await dbSaveOrder(suspended, userId)
       pop("⏸️ تم حفظ الطلب كنشط")
     }
-    setCart([]);setDiscount(null);setCustomer(null);setNotes("");setActiveCat(null);setSearch("");setCashPaid(null);setPayMethod(null);setOrderType("محلي");setScreen("main")
+    setCart([]);setDiscount(null);setCustomer(null);setNotes("");setActiveCat(null);setSearch("");setCashPaid(null);setPayMethod(null);setSplitPayments([]);setSplitMethod(null);setSplitInput("");setOrderType("محلي");setScreen("main")
   }
 
   // ── Return ────────────────────────────────────────────────────────────────
@@ -517,34 +530,104 @@ export default function POS({ session }) {
     </>
   )
 
-  // ── Payment Screen ────────────────────────────────────────────────────────
-  const PaymentScreen=()=>(
-    <>
-      <BackBar onBack={()=>setScreen("main")} extra={<div style={{marginRight:"auto",display:"flex",gap:8}}>
-        <button style={{background:"#6B7280",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",cursor:"pointer",fontWeight:700,fontSize:13}} onClick={()=>setModal("customerList")}>العميل</button>
-      </div>}/>
-      <div style={{flex:1,overflow:"auto",padding:24,maxWidth:480,margin:"0 auto",width:"100%"}}>
-        <h3 style={{textAlign:"center",marginBottom:20,fontWeight:700,fontSize:17}}>طرق الدفع</h3>
-        {["Cash","بطاقة","تحويل مباشر"].map(m=>(
-          <button key={m} onClick={()=>{setPayMethod(m);if(m==="Cash")setModal("cashAmounts");else setCashPaid(null)}} style={{background:"#fff",border:`2px solid ${payMethod===m?P:"#E5E7EB"}`,borderRight:`6px solid ${P}`,borderRadius:12,padding:"16px 20px",cursor:"pointer",width:"100%",textAlign:"right",fontSize:15,fontWeight:600,marginBottom:10,color:"#1F2937",boxShadow:payMethod===m?"0 0 0 3px "+PL:"none",transition:"all .15s"}}>
-            {m==="Cash"?"💵 ":m==="بطاقة"?"💳 ":"🔄 "}{m}
-          </button>
-        ))}
-        <div style={{background:PL,borderRadius:14,padding:"14px 18px",marginTop:16}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}><span style={{fontWeight:900,fontSize:18,color:P}}>{fmt(grandTotal)}</span><span style={{fontWeight:600,color:PD}}>المتبقي للدفع</span></div>
-          {discAmt>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:PD,borderTop:`1px solid ${PL}`,paddingTop:6}}><span>- {fmt(discAmt)}</span><span>الخصم المطبق</span></div>}
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#8B5CF6",marginTop:4}}><span>{fmt(taxExtract)}</span><span>ضريبة 15% — مشمولة</span></div>
-        </div>
-        {payMethod==="Cash"&&cashPaid!==null&&(
-          <div style={{background:"#F0FDF4",borderRadius:14,padding:"12px 18px",marginTop:10,display:"flex",justifyContent:"space-between",alignItems:"center",border:"1.5px solid #BBF7D0"}}>
-            <div><div style={{fontWeight:900,fontSize:20,color:"#065F46"}}>{fmt(change)}</div><div style={{fontSize:11,color:"#065F46",marginTop:2}}>سيُعطى للعميل بعد إتمام الطلب</div></div>
-            <div style={{textAlign:"right"}}><div style={{fontSize:11,color:"#6B7280"}}>دفع</div><div style={{fontWeight:700,fontSize:15}}>{fmt(cashPaid)}</div></div>
+  // ── Payment Screen (Split Payment) ───────────────────────────────────────
+  const PaymentScreen=()=>{
+    const METHODS=[{k:"كاش",icon:"💵"},{k:"بطاقة",icon:"💳"},{k:"تحويل",icon:"🔄"}]
+    const addSplit=()=>{
+      const amt=parseFloat(splitInput)
+      if(!splitMethod||!amt||amt<=0) return
+      const toAdd=Math.min(amt, splitRemaining)
+      setSplitPayments(prev=>[...prev,{method:splitMethod,amount:toAdd}])
+      setSplitMethod(null)
+      setSplitInput("")
+    }
+    const removeSplit=(i)=>setSplitPayments(prev=>prev.filter((_,idx)=>idx!==i))
+    const cashEntry=splitPayments.find(p=>p.method==="كاش")
+    const changeAmt=cashEntry&&splitPaid>grandTotal?splitPaid-grandTotal:0
+
+    return(
+      <>
+        <BackBar onBack={()=>setScreen("main")} extra={<div style={{marginRight:"auto",display:"flex",gap:8}}>
+          <button style={{background:"#6B7280",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",cursor:"pointer",fontWeight:700,fontSize:13}} onClick={()=>setModal("customerList")}>العميل</button>
+        </div>}/>
+        <div style={{flex:1,overflow:"auto",padding:20,maxWidth:500,margin:"0 auto",width:"100%"}}>
+
+          {/* ملخص المبالغ */}
+          <div style={{background:splitComplete?"#F0FDF4":PL,borderRadius:14,padding:"14px 18px",marginBottom:16,border:`2px solid ${splitComplete?"#BBF7D0":PL}`,transition:"all .3s"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+              <span style={{fontWeight:900,fontSize:20,color:splitComplete?"#065F46":P}}>{fmt(grandTotal)}</span>
+              <span style={{fontWeight:600,color:"#6B7280",fontSize:13}}>إجمالي الطلب</span>
+            </div>
+            {discAmt>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#6B7280",marginBottom:4}}><span>- {fmt(discAmt)}</span><span>خصم</span></div>}
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#8B5CF6",marginBottom:8}}><span>{fmt(taxExtract)}</span><span>ضريبة 15% مشمولة</span></div>
+            {splitPayments.length>0&&<>
+              <div style={{borderTop:"1px solid #E5E7EB",paddingTop:8,marginTop:4}}>
+                {splitPayments.map((p,i)=>(
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                    <button onClick={()=>removeSplit(i)} style={{background:"#FEE2E2",border:"none",borderRadius:6,padding:"2px 8px",color:"#EF4444",cursor:"pointer",fontSize:11,fontWeight:700}}>حذف</button>
+                    <span style={{fontWeight:600,fontSize:13}}>{p.method==="كاش"?"💵":p.method==="بطاقة"?"💳":"🔄"} {p.method} — {fmt(p.amount)}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",borderTop:"1px solid #E5E7EB",paddingTop:8,marginTop:4}}>
+                <span style={{fontWeight:900,fontSize:15,color:splitComplete?"#065F46":"#EF4444"}}>{fmt(splitRemaining)}</span>
+                <span style={{fontWeight:700,color:"#6B7280",fontSize:13}}>{splitComplete?"✅ اكتمل الدفع":"المتبقي"}</span>
+              </div>
+            </>}
+            {changeAmt>0&&<div style={{marginTop:8,background:"#ECFDF5",borderRadius:10,padding:"8px 12px",display:"flex",justifyContent:"space-between"}}>
+              <span style={{fontWeight:900,color:"#065F46",fontSize:16}}>{fmt(changeAmt)}</span>
+              <span style={{fontSize:12,color:"#065F46"}}>باقي للعميل</span>
+            </div>}
           </div>
-        )}
-        <button disabled={!payMethod} onClick={finishPayment} style={{background:payMethod?grad:"#E5E7EB",color:"#fff",border:"none",borderRadius:12,padding:"16px",width:"100%",fontSize:16,fontWeight:900,cursor:payMethod?"pointer":"not-allowed",marginTop:16,boxShadow:payMethod?"0 4px 14px rgba(124,58,237,.4)":"none"}}>دفع</button>
-      </div>
-    </>
-  )
+
+          {/* إضافة دفعة */}
+          {!splitComplete&&<>
+            <div style={{fontWeight:700,fontSize:14,marginBottom:10,color:"#374151"}}>إضافة طريقة دفع</div>
+
+            {/* اختيار الطريقة */}
+            <div style={{display:"flex",gap:8,marginBottom:12}}>
+              {METHODS.map(m=>{
+                const alreadyFull=splitPayments.find(p=>p.method===m.k)&&splitRemaining<=0
+                return(
+                  <button key={m.k} onClick={()=>setSplitMethod(m.k)} disabled={!!alreadyFull} style={{flex:1,padding:"12px 8px",border:`2px solid ${splitMethod===m.k?P:"#E5E7EB"}`,borderRadius:12,background:splitMethod===m.k?PL:"#fff",color:splitMethod===m.k?P:"#374151",fontWeight:700,cursor:"pointer",fontSize:13,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                    <span style={{fontSize:20}}>{m.icon}</span>
+                    <span>{m.k}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* إدخال المبلغ */}
+            {splitMethod&&<>
+              <div style={{fontWeight:700,fontSize:13,marginBottom:8,color:"#374151"}}>
+                المبلغ — المتبقي: <span style={{color:P}}>{fmt(splitRemaining)}</span>
+              </div>
+              {/* أزرار سريعة للكاش */}
+              {splitMethod==="كاش"&&<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,marginBottom:10}}>
+                {[10,20,50,100,200,splitRemaining].map((a,i)=>(
+                  <button key={i} onClick={()=>setSplitInput(String(a))} style={{padding:"10px",border:`2px solid ${parseFloat(splitInput)===a?P:"#E5E7EB"}`,borderRadius:10,background:parseFloat(splitInput)===a?PL:"#fff",fontWeight:700,cursor:"pointer",fontSize:i===5?11:14,color:i===5?P:"#1F2937"}}>
+                    {i===5?`كامل (${fmt(a)})`:fmt(a)}
+                  </button>
+                ))}
+              </div>}
+              {splitMethod!=="كاش"&&<button onClick={()=>setSplitInput(String(splitRemaining))} style={{background:PL,border:`1.5px solid ${P}`,borderRadius:10,padding:"10px",width:"100%",color:P,fontWeight:700,cursor:"pointer",fontSize:13,marginBottom:8}}>
+                المبلغ المتبقي كاملاً — {fmt(splitRemaining)}
+              </button>}
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={addSplit} disabled={!splitInput||parseFloat(splitInput)<=0} style={{background:splitInput&&parseFloat(splitInput)>0?grad:"#E5E7EB",color:"#fff",border:"none",borderRadius:10,padding:"12px 20px",cursor:splitInput?"pointer":"not-allowed",fontWeight:700,fontSize:14,whiteSpace:"nowrap"}}>إضافة +</button>
+                <input type="number" value={splitInput} onChange={e=>setSplitInput(e.target.value)} placeholder="أدخل المبلغ" style={{flex:1,padding:"12px",border:`1.5px solid ${P}`,borderRadius:10,fontSize:15,textAlign:"center",outline:"none"}} onKeyDown={e=>e.key==="Enter"&&addSplit()}/>
+              </div>
+            </>}
+          </>}
+
+          {/* زر الدفع النهائي */}
+          <button disabled={!splitComplete} onClick={finishPayment} style={{background:splitComplete?grad:"#E5E7EB",color:"#fff",border:"none",borderRadius:12,padding:"16px",width:"100%",fontSize:16,fontWeight:900,cursor:splitComplete?"pointer":"not-allowed",marginTop:20,boxShadow:splitComplete?"0 4px 14px rgba(124,58,237,.4)":"none",transition:"all .3s"}}>
+            {splitComplete?`✅ إتمام الدفع — ${fmt(grandTotal)}`:`أكمل الدفع — متبقي ${fmt(splitRemaining)}`}
+          </button>
+        </div>
+      </>
+    )
+  }
 
   // ── Orders Screen ─────────────────────────────────────────────────────────
   const OrdersScreen=()=>{
