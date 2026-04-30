@@ -536,8 +536,13 @@ export default function POS({ session }) {
     const addSplit=()=>{
       const amt=parseFloat(splitInput)
       if(!splitMethod||!amt||amt<=0) return
-      const toAdd=Math.min(amt, splitRemaining)
-      setSplitPayments(prev=>[...prev,{method:splitMethod,amount:toAdd}])
+      // كاش مسموح أكثر من المتبقي (باقي للعميل)
+      // بطاقة وتحويل لازم يكون بالضبط أو أقل
+      if(splitMethod!=="كاش" && amt > splitRemaining){
+        alert(`المبلغ أكبر من المتبقي (${fmt(splitRemaining)}) — البطاقة والتحويل لازم يكون بالضبط`)
+        return
+      }
+      setSplitPayments(prev=>[...prev,{method:splitMethod,amount:amt}])
       setSplitMethod(null)
       setSplitInput("")
     }
