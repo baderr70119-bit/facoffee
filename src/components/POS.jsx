@@ -92,27 +92,27 @@ const PRODS={
     {id:84,nameEn:"Small Mango Mix",         name:"ميكس مانجو صغير",       price:8, e:"🥭"},
   ],
   market:[
-    {id:90, nameEn:"Doritos Sweet Chili",    name:"دوريتوز سويت تشيلي",    price:5, e:"🌶️"},
-    {id:91, nameEn:"Kinder",                 name:"كندر",                  price:5, e:"🍫"},
-    {id:92, nameEn:"Mars",                   name:"مارس",                  price:4, e:"🍫"},
-    {id:93, nameEn:"Bounty",                 name:"باونتي",                price:4, e:"🍫"},
-    {id:94, nameEn:"Flutes",                 name:"فلوتس",                 price:3, e:"🍬"},
-    {id:95, nameEn:"Kit Kat",                name:"كتكات",                 price:2, e:"🍫"},
+    {id:90, nameEn:"Doritos Sweet Chili",    name:"دوريتوز سويت تشيلي",    price:7, e:"🌶️"},
+    {id:91, nameEn:"Kinder",                 name:"كندر",                  price:6, e:"🍫"},
+    {id:92, nameEn:"Mars",                   name:"مارس",                  price:5, e:"🍫"},
+    {id:93, nameEn:"Bounty",                 name:"باونتي",                price:5, e:"🍫"},
+    {id:94, nameEn:"Flutes",                 name:"فلوتس",                 price:5, e:"🍬"},
+    {id:95, nameEn:"Kit Kat",                name:"كتكات",                 price:5, e:"🍫"},
     {id:96, nameEn:"Galaxy",                 name:"جالكسي",                price:5, e:"🍫"},
-    {id:97, nameEn:"Maltesers",              name:"مالتيزرز",              price:5, e:"🍫"},
-    {id:98, nameEn:"Twix",                   name:"تويكس",                 price:4, e:"🍫"},
-    {id:99, nameEn:"M&M",                    name:"M&M",                   price:5, e:"🍬"},
+    {id:97, nameEn:"Maltesers",              name:"مالتيزرز",              price:6, e:"🍫"},
+    {id:98, nameEn:"Twix",                   name:"تويكس",                 price:5, e:"🍫"},
+    {id:99, nameEn:"M&M",                    name:"M&M",                   price:6, e:"🍬"},
     {id:100,nameEn:"Lays Cheese Chips",      name:"شيبس ليز جبن",          price:5, e:"🥔"},
     {id:101,nameEn:"Lays Ketchup Chips",     name:"شيبس ليز كتشب",         price:5, e:"🥔"},
-    {id:102,nameEn:"Doritos Cheese",         name:"دوريتوز جبن",           price:5, e:"🌽"},
-    {id:103,nameEn:"Snickers",               name:"سنكرز",                 price:4, e:"🍫"},
+    {id:102,nameEn:"Doritos Cheese",         name:"دوريتوز جبن",           price:7, e:"🌽"},
+    {id:103,nameEn:"Snickers",               name:"سنكرز",                 price:5, e:"🍫"},
     {id:104,nameEn:"Doritos",               name:"دوريتوز",               price:5, e:"🌽"},
   ],
   drip:[
-    {id:110,nameEn:"Hot V60",                name:"Hot V60",               price:16,e:"☕"},
-    {id:111,nameEn:"Iced Coffeeday",         name:"قهوة اليوم بارد",       price:10,e:"🧊"},
-    {id:112,nameEn:"Hot Coffeeday",          name:"قهوة اليوم حار",        price:8, e:"☕"},
-    {id:113,nameEn:"Iced V60",               name:"Iced V60",              price:16,e:"🧊"},
+    {id:110,nameEn:"Hot V60",                name:"Hot V60",               price:22,e:"☕"},
+    {id:111,nameEn:"Iced Coffeeday",         name:"قهوة اليوم بارد",       price:20,e:"🧊"},
+    {id:112,nameEn:"Hot Coffeeday",          name:"قهوة اليوم حار",        price:18,e:"☕"},
+    {id:113,nameEn:"Iced V60",               name:"Iced V60",              price:22,e:"🧊"},
     {id:114,nameEn:"Coffee Day + Cookies",   name:"قهوة اليوم + كوكيز",   price:25,e:"☕"},
     {id:115,nameEn:"Small Iced V60",         name:"Iced V60 صغير",         price:14,e:"🧊"},
     {id:116,nameEn:"Small Iced Coffeeday",   name:"قهوة اليوم بارد صغير",  price:9, e:"🧊"},
@@ -170,33 +170,158 @@ function dbRowToOrder(row){
   }
 }
 
+const TAX_NUM="312574723500003"
+
 function Invoice({order,onClose}){
   if(!order)return null
+  const subtotal=(order.amount||0)-((order.tax)||0)
+  const now=new Date().toLocaleString('en-GB',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true})
   return(
     <div style={ov} onClick={onClose}>
-      <div style={{...mod,maxWidth:360,fontFamily:"monospace",fontSize:12}} onClick={e=>e.stopPropagation()}>
-        <div style={{textAlign:"center",marginBottom:12}}>
-          <div style={{fontWeight:900,fontSize:16,letterSpacing:2}}>FA COFFEE</div>
-          <div style={{fontSize:10,color:"#666"}}>شركة مدينة فارس الرياضية</div>
-          <div style={{fontSize:10,color:"#666"}}>فرع نوره رجالي — الرياض</div>
-          <div style={{borderTop:"1px dashed #ccc",marginTop:8,paddingTop:8,fontSize:10}}>
-            Order #{order.num} | {order.time} | {order.type}
+      <div style={{...mod,maxWidth:380,fontFamily:"'Courier New',monospace",fontSize:13,padding:0,overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+        <div style={{padding:"8px 16px",background:P,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <button onClick={onClose} style={{background:"rgba(255,255,255,.2)",border:"none",color:"#fff",borderRadius:8,padding:"4px 12px",cursor:"pointer",fontWeight:700,fontSize:13}}>✕</button>
+          <span style={{color:"#fff",fontWeight:700,fontSize:14}}>فاتورة الطلب</span>
+          <span style={{color:"#fff",fontWeight:700,fontSize:13}}>تم</span>
+        </div>
+        <div style={{overflow:"auto",maxHeight:"80vh",padding:"20px 24px"}}>
+          {/* Logo area */}
+          <div style={{textAlign:"center",marginBottom:16}}>
+            <div style={{width:80,height:80,border:"2px solid #1F2937",borderRadius:8,margin:"0 auto 8px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:900,letterSpacing:-2}}>
+              <span style={{fontFamily:"serif",fontSize:32,lineHeight:1}}>F<br/>A</span>
+            </div>
+            <div style={{fontWeight:900,fontSize:18,letterSpacing:3}}>COFFEE</div>
+          </div>
+          <div style={{borderTop:"1px solid #E5E7EB",paddingTop:12,marginBottom:12,textAlign:"center",fontSize:12}}>
+            <div style={{fontWeight:700}}>شركة مدينة فارس الرياضية - فرع نوره رجالي</div>
+            <div style={{color:"#6B7280",marginTop:4}}>فاتورة ضريبية مبسطة</div>
+            <div style={{color:"#6B7280",marginTop:2}}>المملكة العربية السعودية - الرياض - جامعة الأميرة نورة</div>
+            <div style={{color:"#6B7280",marginTop:2}}>الرقم الضريبي</div>
+            <div style={{fontWeight:700,fontSize:14,marginTop:2}}>{TAX_NUM}</div>
+          </div>
+
+          {/* Order header */}
+          <div style={{background:"#F9FAFB",borderRadius:8,padding:"10px 14px",marginBottom:12,fontSize:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+              <span style={{color:"#6B7280"}}>Order#</span>
+              <span style={{fontWeight:900,fontSize:15}}>{order.num}</span>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+              <span style={{color:"#6B7280"}}>Printed At</span>
+              <span>{now}</span>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+              <span style={{color:"#6B7280"}}>{order.type==="محلي"?"Dine In":order.type==="سفري"?"Take Away":"Delivery"}</span>
+              <span>Check# {order.id}</span>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between"}}>
+              <span style={{color:"#6B7280"}}>Time</span>
+              <span>{order.time}</span>
+            </div>
+          </div>
+
+          {/* Items */}
+          <div style={{borderTop:"1px solid #E5E7EB",paddingTop:10,marginBottom:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#9CA3AF",marginBottom:6,fontWeight:700}}>
+              <span>Qty  Item</span><span>Price</span>
+            </div>
+            {(order.items||[]).map((it,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:"space-between",marginBottom:6,fontSize:12}}>
+                <span style={{flex:1}}>{it.qty}  {it.nameEn||it.name} | {it.name}</span>
+                <span style={{fontWeight:700,marginRight:0}}>{fmt(it.price*it.qty)}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Totals */}
+          <div style={{borderTop:"1px solid #E5E7EB",paddingTop:10,fontSize:13}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+              <span>Subtotal</span><span>{fmt(subtotal)}</span>
+            </div>
+            {order.discount>0&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:4,color:"#EF4444"}}>
+              <span>Discount</span><span>- {fmt(order.discount)}</span>
+            </div>}
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4,color:"#6B7280",fontSize:12}}>
+              <span>Vat(15.0%)</span><span>{fmt(order.tax||0)}</span>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:15,marginBottom:4,borderTop:"1px solid #1F2937",paddingTop:6}}>
+              <span>Total</span><span>{fmt(order.amount)}</span>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:8}}>
+              <span>Payment - {order.payMethod==="كاش"?"Cash":order.payMethod==="بطاقة"?"Card":order.payMethod||"—"}</span>
+              <span>{fmt(order.amount)}</span>
+            </div>
+            <div style={{textAlign:"center",fontSize:11,color:"#6B7280",marginBottom:8}}>
+              Products Count {(order.items||[]).reduce((s,i)=>s+i.qty,0)}
+            </div>
+          </div>
+
+          {/* QR Code placeholder */}
+          <div style={{textAlign:"center",marginTop:8,paddingTop:8,borderTop:"1px dashed #E5E7EB"}}>
+            <div style={{textAlign:"center",fontSize:12,color:"#374151",marginBottom:8,fontWeight:700}}>نورتنا وشرفتنا 💜</div>
+            <div style={{width:120,height:120,margin:"0 auto",background:"#F3F4F6",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#9CA3AF",border:"1px solid #E5E7EB"}}>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:24,marginBottom:4}}>◼◻◼◻◼</div>
+                <div style={{fontSize:24}}>◻◼◻◼◻</div>
+                <div style={{fontSize:24}}>◼◻◼◻◼</div>
+                <div style={{fontSize:9,marginTop:4}}>QR Code</div>
+                <div style={{fontSize:8}}>{TAX_NUM}</div>
+              </div>
+            </div>
           </div>
         </div>
-        {(order.items||[]).map((it,i)=>(
-          <div key={i} style={{display:"flex",justifyContent:"space-between",marginBottom:4,fontSize:12}}>
-            <span>{it.nameEn||it.name} ×{it.qty}</span>
-            <span>{fmt(it.price*it.qty)}</span>
-          </div>
-        ))}
-        <div style={{borderTop:"1px dashed #ccc",marginTop:8,paddingTop:8}}>
-          {order.discount>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#EF4444"}}><span>Discount</span><span>- {fmt(order.discount)}</span></div>}
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#888"}}><span>VAT 15% (included)</span><span>{fmt(order.tax||0)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:14,marginTop:4}}><span>TOTAL</span><span>{fmt(order.amount)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginTop:4,color:"#555"}}><span>Payment</span><span>{order.payMethod}</span></div>
+      </div>
+    </div>
+  )
+}
+
+function OrderDetailModal({order,onClose}){
+  if(!order)return null
+  const sl={نشط:"Active",تم:"Done",ملغى:"Cancelled",معلق:"Pending",مرتجع:"Returned"}
+  return(
+    <div style={ov} onClick={onClose}>
+      <div style={{...mod,maxWidth:420,padding:0,overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+        <div style={{padding:"12px 16px",background:P,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <button onClick={onClose} style={{background:"rgba(255,255,255,.2)",border:"none",color:"#fff",borderRadius:8,padding:"4px 12px",cursor:"pointer",fontWeight:700}}>✕</button>
+          <span style={{color:"#fff",fontWeight:700,fontSize:14}}>Order Details</span>
+          <span style={{color:"#fff",fontWeight:700}}>{sl[order.status]||order.status}</span>
         </div>
-        <div style={{textAlign:"center",marginTop:12,fontSize:10,color:"#888",borderTop:"1px dashed #ccc",paddingTop:8}}>Thank you for visiting FA Coffee!</div>
-        <button onClick={onClose} style={{background:grad,color:"#fff",border:"none",borderRadius:10,padding:"10px",width:"100%",cursor:"pointer",fontWeight:700,marginTop:12}}>Close</button>
+        <div style={{overflow:"auto",maxHeight:"75vh"}}>
+          {/* Meta info */}
+          {[
+            {l:"Start Time",    v:order.time},
+            {l:"Close Time",    v:order.time},
+            {l:"Created By",    v:"Cashier"},
+            {l:"Status",        v:sl[order.status]||order.status},
+            {l:"Invoice #",     v:order.id},
+            {l:"Order Source",  v:"POS"},
+            {l:"Order Type",    v:order.type==="محلي"?"Dine In":order.type==="سفري"?"Take Away":"Delivery"},
+          ].map(({l,v})=>(
+            <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"12px 18px",borderBottom:"1px solid #F3F4F6",fontSize:13}}>
+              <span style={{color:"#9CA3AF"}}>{v}</span>
+              <span style={{fontWeight:600,color:"#1F2937"}}>{l}</span>
+            </div>
+          ))}
+          {/* Items */}
+          <div style={{padding:"12px 18px",background:"#F9FAFB",borderBottom:"1px solid #E5E7EB"}}>
+            <div style={{fontWeight:700,fontSize:13,marginBottom:8,textAlign:"right"}}>Order Items</div>
+            {(order.items||[]).map((it,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:13,padding:"6px 0",borderBottom:"1px solid #E5E7EB"}}>
+                <span style={{fontWeight:700,color:P}}>{fmt(it.price*it.qty)}</span>
+                <span>{it.nameEn||it.name} × {it.qty}</span>
+              </div>
+            ))}
+          </div>
+          {/* Payment */}
+          <div style={{padding:"12px 18px"}}>
+            <div style={{fontWeight:700,fontSize:13,marginBottom:8,textAlign:"right"}}>مدفوعات الطلب</div>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:13,padding:"8px 0",borderBottom:"1px solid #F3F4F6"}}>
+              <span style={{color:"#6B7280"}}>{order.time} في</span>
+              <span style={{fontWeight:600}}>{order.payMethod==="كاش"?`Cash, ${fmt(order.amount)}`:order.payMethod==="بطاقة"?`Card, ${fmt(order.amount)}`:`${order.payMethod||"—"}, ${fmt(order.amount)}`}</span>
+              <span style={{fontWeight:700,color:"#374151"}}>الدفع</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -238,6 +363,7 @@ export default function POS({session}){
   const [showMobileCart,setShowMobileCart]=useState(false)
   const [toast,setToast]=useState(null)
   const [invoiceOrder,setInvoiceOrder]=useState(null)
+  const [detailOrder,setDetailOrder]=useState(null)
 
   const userId=session?.user?.id
 
@@ -408,10 +534,14 @@ export default function POS({session}){
 
   const BottomNav=()=>(
     <div style={{background:"#fff",borderTop:"1px solid #E5E7EB",display:"flex",justifyContent:"space-around",padding:"8px 0"}}>
-      {[{icon:"🏠",label:"Home",sc:"main"},{icon:"🕐",label:"Orders",sc:"orders"},{icon:"📊",label:"Report",sc:"report"},{icon:"➕",label:"New",sc:"new"}].map(({icon,label,sc})=>(
-        <button key={label} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 16px",cursor:"pointer",background:"none",border:"none",color:screen===sc?P:"#9CA3AF",fontSize:11,fontWeight:screen===sc?700:400}}
+      {[{icon:"🏠",label:"Home",sc:"home"},{icon:"☕",label:"POS",sc:"main"},{icon:"🕐",label:"Orders",sc:"orders"},{icon:"📊",label:"Report",sc:"report"},{icon:"➕",label:"New",sc:"new"}].map(({icon,label,sc})=>(
+        <button key={label} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 12px",cursor:"pointer",background:"none",border:"none",color:screen===sc?P:"#9CA3AF",fontSize:10,fontWeight:screen===sc?700:400}}
           onClick={()=>sc==="new"?suspendCart():setScreen(sc)}>
-          <span style={{fontSize:20}}>{icon}</span><span>{label}</span>
+          <span style={{fontSize:18}}>{icon}</span><span>{label}</span>
+        </button>
+      ))}
+    </div>
+  )
         </button>
       ))}
     </div>
@@ -777,7 +907,7 @@ export default function POS({session}){
           {selOrder.status==="تم"&&<button onClick={()=>{setReturnStep(1);setRetQtys({});setRetReason("");setRetMethod("");setModal(null)}} style={{background:"#FFF7ED",color:"#C2410C",border:"2px solid #FED7AA",borderRadius:12,padding:"14px",width:"100%",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>↩ Return Order</button>}
           <button onClick={()=>{setInvoiceOrder(selOrder);setModal(null)}} style={{background:"#F0FDF4",color:"#065F46",border:"2px solid #BBF7D0",borderRadius:12,padding:"14px",width:"100%",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>🧾 View Invoice</button>
           <button onClick={()=>{pop("🖨️ Printing...");setModal(null)}} style={{background:"#EFF6FF",color:"#1D4ED8",border:"2px solid #BFDBFE",borderRadius:12,padding:"14px",width:"100%",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>🖨️ Print Invoice</button>
-          <button onClick={()=>setModal(null)} style={{background:"#F5F3FF",color:P,border:`2px solid ${PL}`,borderRadius:12,padding:"14px",width:"100%",fontSize:15,fontWeight:700,cursor:"pointer"}}>📋 Order Details</button>
+          <button onClick={()=>{setDetailOrder(selOrder);setModal(null)}} style={{background:"#F5F3FF",color:P,border:`2px solid ${PL}`,borderRadius:12,padding:"14px",width:"100%",fontSize:15,fontWeight:700,cursor:"pointer"}}>📋 Order Details</button>
         </div>
       </div>
     )
@@ -912,10 +1042,87 @@ export default function POS({session}){
     )
   }
 
+  const HomeScreen=()=>{
+    const done=orders.filter(o=>o.status==="تم")
+    const rev=done.reduce((s,o)=>s+o.amount,0)
+    const tax=done.reduce((s,o)=>s+(o.tax||0),0)
+    const todayStr=new Date().toLocaleDateString('en-GB',{year:'numeric',month:'2-digit',day:'2-digit'})
+    const nowFull=new Date().toLocaleString('en-GB',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true})
+    return(
+      <>
+        <div style={{background:"#fff",padding:"10px 16px",borderBottom:"1px solid #E5E7EB",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <button onClick={handleLogout} style={{background:"#EF4444",color:"#fff",border:"none",borderRadius:10,padding:"7px 14px",cursor:"pointer",fontSize:12,fontWeight:700}}>Logout</button>
+          <span style={{fontWeight:900,fontSize:16,color:P}}>FA COFFEE</span>
+          <span style={{fontSize:11,color:"#9CA3AF"}}>{session?.user?.email}</span>
+        </div>
+        <div style={{flex:1,overflow:"auto",padding:16}}>
+          <div style={{background:grad,borderRadius:16,padding:"20px 24px",marginBottom:14,color:"#fff"}}>
+            <div style={{fontSize:11,opacity:.8,marginBottom:2}}>شركة مدينة فارس الرياضية</div>
+            <div style={{fontWeight:900,fontSize:18,marginBottom:2}}>FA COFFEE — فرع نوره رجالي</div>
+            <div style={{fontSize:11,opacity:.7,marginBottom:8}}>الرياض — جامعة الأميرة نورة</div>
+            <div style={{fontSize:10,opacity:.6}}>{nowFull}</div>
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+            {[
+              {l:"Total Sales",   v:fmt(rev),        c:"#10B981"},
+              {l:"Orders Done",   v:done.length,     c:P},
+              {l:"VAT 15%",       v:fmt(tax),        c:"#F59E0B"},
+              {l:"Active Orders", v:activeCount,     c:"#EF4444"},
+            ].map(({l,v,c})=>(
+              <div key={l} style={{background:"#fff",borderRadius:14,padding:"14px",boxShadow:"0 2px 8px rgba(0,0,0,.05)",borderTop:`4px solid ${c}`}}>
+                <div style={{fontWeight:900,fontSize:18,color:c}}>{v}</div>
+                <div style={{fontSize:11,color:"#6B7280",marginTop:3}}>{l}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{background:"#fff",borderRadius:14,padding:"14px 18px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,.05)"}}>
+            <div style={{fontWeight:700,marginBottom:10,fontSize:13}}>Tax & Business Info</div>
+            {[
+              {l:"الرقم الضريبي",   v:TAX_NUM},
+              {l:"Business Date",  v:todayStr},
+              {l:"Branch",         v:"نوره رجالي — B01"},
+              {l:"Country",        v:"المملكة العربية السعودية"},
+            ].map(({l,v})=>(
+              <div key={l} style={{display:"flex",justifyContent:"space-between",fontSize:12,padding:"7px 0",borderBottom:"1px solid #F3F4F6"}}>
+                <span style={{fontWeight:600,fontFamily:"monospace",fontSize:11}}>{v}</span>
+                <span style={{color:"#6B7280"}}>{l}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{background:"#fff",borderRadius:14,padding:"14px 18px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,.05)"}}>
+            <div style={{fontWeight:700,marginBottom:10,fontSize:13}}>Payments Summary</div>
+            {[{k:"كاش",l:"Cash",c:"#10B981"},{k:"بطاقة",l:"Card",c:P},{k:"تحويل",l:"Transfer",c:"#F59E0B"}].map(({k,l,c})=>{
+              const mo=done.filter(o=>o.payMethod===k||o.payMethod?.includes(k))
+              return(
+                <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #F3F4F6",fontSize:13,alignItems:"center"}}>
+                  <span style={{fontWeight:700,color:c}}>{fmt(mo.reduce((s,o)=>s+o.amount,0))}</span>
+                  <span style={{color:"#374151"}}>{l} <span style={{color:"#9CA3AF",fontSize:11}}>({mo.length})</span></span>
+                </div>
+              )
+            })}
+            <div style={{display:"flex",justifyContent:"space-between",padding:"8px 0",fontSize:14,fontWeight:900}}>
+              <span style={{color:P}}>{fmt(rev)}</span><span>Total Net</span>
+            </div>
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:60}}>
+            <button onClick={()=>setScreen("main")} style={{background:grad,color:"#fff",border:"none",borderRadius:14,padding:"14px",cursor:"pointer",fontWeight:700,fontSize:13,boxShadow:"0 4px 12px rgba(124,58,237,.3)"}}>☕ New Order</button>
+            <button onClick={()=>setScreen("orders")} style={{background:"#fff",color:P,border:`2px solid ${P}`,borderRadius:14,padding:"14px",cursor:"pointer",fontWeight:700,fontSize:13}}>🕐 Orders</button>
+          </div>
+        </div>
+        <BottomNav/>
+      </>
+    )
+  }
+
   return(
     <div style={{fontFamily:"'Tajawal','Arial',sans-serif",direction:"rtl",display:"flex",height:"100vh",background:"#F5F3FF",overflow:"hidden",fontSize:14}}>
-      {!isMobile&&<CartPanel/>}
+      {!isMobile&&screen!=="home"&&<CartPanel/>}
       <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        {screen==="home"   &&<HomeScreen/>}
         {screen==="main"   &&<MainScreen/>}
         {screen==="payment"&&<PaymentScreen/>}
         {screen==="orders" &&<OrdersScreen/>}
@@ -936,6 +1143,7 @@ export default function POS({session}){
       <MobileCartBtn/>
       <MobileCartOverlay/>
       {invoiceOrder&&<Invoice order={invoiceOrder} onClose={()=>setInvoiceOrder(null)}/>}
+      {detailOrder&&<OrderDetailModal order={detailOrder} onClose={()=>setDetailOrder(null)}/>}
       {toast&&<div style={{position:"fixed",bottom:28,left:"50%",transform:"translateX(-50%)",background:"#1F2937",color:"#fff",padding:"11px 22px",borderRadius:30,fontWeight:600,fontSize:13,zIndex:400,boxShadow:"0 6px 24px rgba(0,0,0,.3)",whiteSpace:"nowrap"}}>{toast}</div>}
     </div>
   )
