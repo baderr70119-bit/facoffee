@@ -6,6 +6,7 @@ import POS from './components/POS'
 export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
